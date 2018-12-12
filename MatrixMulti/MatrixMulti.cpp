@@ -40,9 +40,9 @@ void MultiplyWithOutOptimization(int** aMatrix, unsigned int aRowNum, unsigned i
 			for (int inner = 0; inner < aColumnNum; inner++) {
 				product[row][col] += aMatrix[row][inner] * bMatrix[inner][col];
 			}
-			//cout << product[row][col] << "  ";
+			cout << product[row][col] << "  ";
 		}
-		//cout << "\n";
+		cout << "\n";
 	}
 }
 
@@ -50,18 +50,47 @@ void Multiply(int** aMatrix, unsigned int aRowNum, unsigned int aColumnNum,
 			  int** bMatrix, unsigned int bColumnNum)
 {
 	int* product = new int[aRowNum * bColumnNum];
-	for (int i = 0; i < aRowNum * bColumnNum; i++)
-		product[i] = 0;
+	/*int* transposedBMatrix = new int[aColumnNum * bColumnNum];
+
+#pragma omp parallel for
+	for (int i = 0; i < aColumnNum; i++) {
+		for (int j = 0; j < bColumnNum; j++) {
+			transposedBMatrix[j * bColumnNum + i] = bMatrix[i][j];
+			//BT[j][i] = B[i][j];
+		}
+	}
 	
 #pragma omp parallel for
 	for (int row = 0; row < aRowNum; row++) 
 	{
 		for (int col = 0; col < bColumnNum; col++) 
 		{
+			int summand = 0;
 			for (int inner = 0; inner < aColumnNum; inner++) {
-				product[row * aRowNum + col] += aMatrix[row][inner] * bMatrix[inner][col];
+				//product[row * aRowNum + col] += aMatrix[row][inner] * bMatrix[inner][row];
+				summand += aMatrix[row][inner] * transposedBMatrix[col * bColumnNum + inner];
 			}
+			product[row * aRowNum + col] = summand;
 			//cout << product[row * aRowNum + col] << "  ";
+		}
+		//cout << "\n";
+	}*/
+
+	int* column = new int[aColumnNum];
+#pragma omp parallel for
+	for (int j = 0; j < bColumnNum; j++)
+	{
+		for (int k = 0; k < aColumnNum; k++)
+			column[k] = bMatrix[k][j];
+		for (int i = 0; i < aRowNum; i++)
+		{
+			int* row = aMatrix[i];
+			double summand = 0;
+#pragma omp parallel for
+			for (int k = 0; k < aColumnNum; k++)
+				summand += row[k] * column[k];
+			product[i * aRowNum + j] = summand;
+			//cout << product[i * aRowNum + j] << "  ";
 		}
 		//cout << "\n";
 	}
@@ -69,9 +98,9 @@ void Multiply(int** aMatrix, unsigned int aRowNum, unsigned int aColumnNum,
 
 int main()
 {
-	int aRowNum = 1000;
-	int aColumnNum = 1000;
-	int bColumnNum = 1000;
+	const int aRowNum = 3;
+	const int aColumnNum = 3;
+	const int bColumnNum = 3;
 	int** aMatrix = GenerateMatrix(aRowNum, aColumnNum);
 	int** bMatrix = GenerateMatrix(aColumnNum, bColumnNum);
 	double start, end;
