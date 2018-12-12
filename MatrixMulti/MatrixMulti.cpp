@@ -18,7 +18,7 @@ int** GenerateMatrix(unsigned int rowNum, unsigned int columnNum)
 		}
 		//cout << endl;
 	}
-	cout << endl;
+	//cout << endl;
 
 	return matrix;
 }
@@ -43,6 +43,7 @@ void MultiplyWithOutOptimization(int** aMatrix, unsigned int aRowNum, unsigned i
 		}
 		//cout << "\n";
 	}
+	//cout << endl;
 }
 
 void Multiply(int** aMatrix, unsigned int aRowNum, unsigned int aColumnNum,
@@ -50,29 +51,34 @@ void Multiply(int** aMatrix, unsigned int aRowNum, unsigned int aColumnNum,
 {
 	int* product = new int[aRowNum * bColumnNum];
 	int* column = new int[aColumnNum];
-#pragma omp parallel for
-	for (int j = 0; j < bColumnNum; j++)
+	#pragma omp parallel
 	{
-		for (int k = 0; k < aColumnNum; k++)
-			column[k] = bMatrix[k][j];
-		for (int i = 0; i < aRowNum; i++)
+		#pragma omp for
+		for (int j = 0; j < bColumnNum; j++)
 		{
-			int* row = aMatrix[i];
-			double summand = 0;
 			for (int k = 0; k < aColumnNum; k++)
-				summand += row[k] * column[k];
-			product[i * aRowNum + j] = summand;
-			//cout << product[i * aRowNum + j] << "  ";
+				column[k] = bMatrix[k][j];
+			for (int i = 0; i < aRowNum; i++)
+			{
+				int* row = aMatrix[i];
+				double summand = 0;
+				#pragma omp for reduction(+:sum)
+				for (int k = 0; k < aColumnNum; k++)
+					summand += row[k] * column[k];
+				product[i * aRowNum + j] = summand;
+				//cout << product[i * aRowNum + j] << "  ";
+			}
+			//cout << "\n";
 		}
-		//cout << "\n";
 	}
+	//cout << endl;
 }
 
 int main()
 {
-	const int aRowNum = 500;
-	const int aColumnNum = 500;
-	const int bColumnNum = 500;
+	const int aRowNum = 1000;
+	const int aColumnNum = 1000;
+	const int bColumnNum = 1000;
 	int** aMatrix = GenerateMatrix(aRowNum, aColumnNum);
 	int** bMatrix = GenerateMatrix(aColumnNum, bColumnNum);
 	double start, end;
