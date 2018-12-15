@@ -11,6 +11,8 @@ int** GenerateMatrix(unsigned int rowNum, unsigned int columnNum)
 	for (int i = 0; i < rowNum; i++)
 		matrix[i] = new int[columnNum];
 
+	omp_set_num_threads(4);
+	#pragma omp parallel for
 	for (int i = 0; i < rowNum; i++) {
 		for (int j = 0; j < columnNum; j++) {
 			matrix[i][j] = rand() % 10 + 1;
@@ -51,6 +53,7 @@ void Multiply(int** aMatrix, unsigned int aRowNum, unsigned int aColumnNum,
 {
 	int* product = new int[aRowNum * bColumnNum];
 	int* column = new int[aColumnNum];
+	omp_set_num_threads(4);
 	#pragma omp parallel
 	{
 		#pragma omp for
@@ -61,8 +64,7 @@ void Multiply(int** aMatrix, unsigned int aRowNum, unsigned int aColumnNum,
 			for (int i = 0; i < aRowNum; i++)
 			{
 				int* row = aMatrix[i];
-				double summand = 0;
-				#pragma omp for reduction(+:sum)
+				int summand = 0;
 				for (int k = 0; k < aColumnNum; k++)
 					summand += row[k] * column[k];
 				product[i * aRowNum + j] = summand;
