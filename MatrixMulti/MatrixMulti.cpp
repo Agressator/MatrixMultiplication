@@ -93,5 +93,13 @@ int main()
 	end = omp_get_wtime();
 	cout << "Work with optimizations took " << end - start << "sec. time.\n";
 
+	for (int i = 0; i < aRowNum; i++)
+		delete[] aMatrix[i];
+	delete aMatrix;
+
+	for (int i = 0; i < aColumnNum; i++)
+		delete[] bMatrix[i];
+	delete bMatrix;
+
 	getchar();
 }
